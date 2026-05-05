@@ -1,25 +1,44 @@
 # agent-council-cli
 
-Prompt-native multi-agent validation loop for Claude, Codex, and Gemini CLIs.
+Run the same prompt across the AI CLIs you already use, then compare their
+answers.
 
-This is not an autonomous agent swarm. It is a small command-line harness for
-asking multiple CLI agents the same question, comparing their answers, and
-keeping an append-only audit trail.
+`agent-council-cli` is a small wrapper for Claude, Codex, Gemini, Ollama, and
+custom local commands. It fires one prompt at multiple already-authenticated
+CLIs, prints a compact side-by-side result, and keeps the raw transcripts in an
+append-only JSONL log.
 
 > Authentication model: users log in to each agent CLI from their own terminal
 > first. `agent-council-cli` does not manage OAuth, store API keys, or run
 > browser login flows. It only calls local agent CLIs that are already
 > authenticated on the user's machine.
 
+## What It Is
+
+- a one-command way to stop copy-pasting the same prompt into multiple AI CLIs
+- a side-by-side comparison layer for different model or agent opinions
+- a lightweight chat loop when you want follow-up questions
+- a JSONL audit log for raw stdout/stderr and session events
+- a config file for adding your own local CLI agents
+
+## What It Is Not
+
+- not a tmux, pane, or long-running session manager
+- not a git worktree tool
+- not an autonomous swarm
+- not a multi-agent framework
+- not a token or OAuth manager
+- not a replacement for Claude Code, Codex, Gemini CLI, or Ollama
+
 ## Why
 
-Most multi-agent demos optimize for automation. This project optimizes for a
-human workflow:
+Most multi-agent tools optimize for orchestration. This project optimizes for a
+smaller workflow: ask several tools the same question, see the differences, and
+decide yourself.
 
-- keep natural-language prompting as the main interface
 - run multiple strong CLI agents in parallel
-- give each agent a distinct review role
-- show a compact human-readable summary by default
+- give each agent an optional review role
+- show compact output by default
 - keep raw transcripts in JSONL for later debugging
 - support threaded follow-up without requiring a daemon or web app
 
@@ -157,9 +176,30 @@ ruff check .
 python -m agent_council chat
 ```
 
+## Roadmap
+
+Near-term ideas:
+
+- `--raw` to show raw provider output without compact formatting
+- disagreement-focused output that highlights where agents diverge
+- custom summary or judge prompt
+- `agent-council doctor` to check installed/authenticated CLIs
+- `agent-council agents` to list built-ins and config-loaded agents
+
+Not planned for now:
+
+- worktree management
+- tmux dashboards
+- agent-to-agent tool calling
+- voting systems
+- persistent memory
+- OAuth or token storage
+
 ## 繁體中文快速指南
 
-`agent-council-cli` 是一個以 prompt 為中心的多代理驗證 CLI。它不是自動化 agent swarm，而是把同一個問題同時交給多個本機 agent CLI，例如 Claude、Codex、Gemini，並保留可追溯的 JSONL audit log。
+`agent-council-cli` 是一個小型 CLI wrapper：把同一個 prompt 同時丟給你本機已登入的 Claude、Codex、Gemini、Ollama 或自訂 CLI，並列顯示結果，同時保留可追溯的 JSONL audit log。
+
+它不是 tmux / worktree / dashboard，也不是自動化 agent swarm。它只做一件事：幫你少複製貼上幾次，快速比較不同 AI CLI 的答案。
 
 ### 安裝
 
@@ -202,7 +242,9 @@ agent-council chat --config agents.yaml --providers local-llama
 
 ## 简体中文快速指南
 
-`agent-council-cli` 是一个以 prompt 为中心的多代理验证 CLI。它不是自动化 agent swarm，而是把同一个问题同时交给多个本机 agent CLI，例如 Claude、Codex、Gemini，并保留可追溯的 JSONL audit log。
+`agent-council-cli` 是一个小型 CLI wrapper：把同一个 prompt 同时丢给你本机已登录的 Claude、Codex、Gemini、Ollama 或自定义 CLI，并列显示结果，同时保留可追溯的 JSONL audit log。
+
+它不是 tmux / worktree / dashboard，也不是自动化 agent swarm。它只做一件事：帮你少复制粘贴几次，快速比较不同 AI CLI 的答案。
 
 ### 安装
 
@@ -245,7 +287,9 @@ agent-council chat --config agents.yaml --providers local-llama
 
 ## 日本語クイックガイド
 
-`agent-council-cli` は、prompt を中心にしたマルチエージェント検証用 CLI です。自律型の agent swarm ではなく、同じ質問を Claude、Codex、Gemini などのローカル agent CLI に並列で渡し、比較しやすい要約と追跡可能な JSONL audit log を残します。
+`agent-council-cli` は小さな CLI wrapper です。同じ prompt を、すでにローカルで認証済みの Claude、Codex、Gemini、Ollama、または任意の CLI に並列で渡し、結果を比較しやすく表示し、追跡可能な JSONL audit log を残します。
+
+tmux / worktree / dashboard ではなく、自律型 agent swarm でもありません。目的はシンプルです。同じ質問を何度もコピー＆ペーストせず、複数の AI CLI の回答をすばやく比較することです。
 
 ### インストール
 
