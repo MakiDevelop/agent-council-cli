@@ -6,6 +6,11 @@ This is not an autonomous agent swarm. It is a small command-line harness for
 asking multiple CLI agents the same question, comparing their answers, and
 keeping an append-only audit trail.
 
+> Authentication model: users log in to each agent CLI from their own terminal
+> first. `agent-council-cli` does not manage OAuth, store API keys, or run
+> browser login flows. It only calls local agent CLIs that are already
+> authenticated on the user's machine.
+
 ## Why
 
 Most multi-agent demos optimize for automation. This project optimizes for a
