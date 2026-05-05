@@ -1,0 +1,32 @@
+[project]
+name = "agent-council-cli"
+version = "0.1.0"
+description = "Prompt-native multi-agent validation loop for Claude, Codex, and Gemini CLIs."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "MakiDevelop" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+agent-council = "agent_council.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["agent_council*"]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
