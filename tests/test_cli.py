@@ -4,8 +4,8 @@ import argparse
 import json
 
 from agent_council.audit import latest_session, load_events, write_event
-from agent_council.cli import clean_body, extract_parent_context, provider_list, resolve_prompt
-from agent_council.workers import Provider, build_prompt
+from agent_council.cli import agents_from_args, clean_body, extract_parent_context, resolve_prompt
+from agent_council.workers import AgentConfig, build_command, build_prompt, load_agents_config, resolve_agents
 
 
 def test_clean_body_strips_markdown_noise() -> None:
@@ -23,16 +23,54 @@ def test_clean_body_strips_markdown_noise() -> None:
     assert "quoted" in out
 
 
-def test_provider_list_default_and_custom() -> None:
-    assert provider_list(None) == (Provider.claude, Provider.codex, Provider.gemini)
-    assert provider_list("codex,gemini") == (Provider.codex, Provider.gemini)
+def test_resolve_agents_default_and_custom() -> None:
+    agents = load_agents_config(None)
+    assert [agent.name for agent in resolve_agents(None, agents)] == ["claude", "codex", "gemini"]
+    assert [agent.name for agent in resolve_agents("codex,gemini", agents)] == ["codex", "gemini"]
 
 
 def test_build_prompt_tags_provider() -> None:
-    prompt = build_prompt(Provider.codex, "review this")
+    agent = AgentConfig("codex", ("codex", "{prompt}"), "Role: Engineer.")
+    prompt = build_prompt(agent, "review this")
     assert prompt.startswith("[AGENT: codex]")
     assert "review this" in prompt
     assert "Do not modify files" in prompt
+
+
+def test_build_command_replaces_prompt() -> None:
+    agent = AgentConfig("local", ("tool", "--prompt", "{prompt}"), "Role: Local reviewer.")
+    assert build_command(agent, "hello") == ["tool", "--prompt", "hello"]
+
+
+def test_load_agents_config_yaml_subset(tmp_path) -> None:
+    path = tmp_path / "agents.yaml"
+    path.write_text(
+        """
+agents:
+  local:
+    command: ["ollama", "run", "llama3.1", "{prompt}"]
+    role: "Local reviewer."
+""",
+        encoding="utf-8",
+    )
+    agents = load_agents_config(path)
+    assert agents["local"].command == ("ollama", "run", "llama3.1", "{prompt}")
+    assert agents["local"].role == "Local reviewer."
+
+
+def test_agents_from_args_loads_config(tmp_path) -> None:
+    path = tmp_path / "agents.yaml"
+    path.write_text(
+        """
+agents:
+  local:
+    command: ["python", "-c", "print('ok')", "{prompt}"]
+    role: "Local reviewer."
+""",
+        encoding="utf-8",
+    )
+    ns = argparse.Namespace(config=path, providers="local")
+    assert [agent.name for agent in agents_from_args(ns)] == ["local"]
 
 
 def test_resolve_prompt_from_items() -> None:

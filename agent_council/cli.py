@@ -10,10 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .audit import audit_dir, audit_file, latest_session, load_events, session_id, trace_id, write_event
-from .workers import Provider, WorkerResult, WorkerSpec, build_prompt, run_worker
-
-
-DEFAULT_PROVIDERS = (Provider.claude, Provider.codex, Provider.gemini)
+from .workers import AgentConfig, WorkerResult, WorkerSpec, build_prompt, load_agents_config, resolve_agents, run_worker
 
 
 def make_session_id(prefix: str, prompt: str) -> str:
@@ -33,13 +30,9 @@ def resolve_prompt(args: argparse.Namespace, field: str = "prompt") -> str:
     return value or ""
 
 
-def provider_list(value: str | None) -> tuple[Provider, ...]:
-    if not value:
-        return DEFAULT_PROVIDERS
-    providers: list[Provider] = []
-    for part in value.split(","):
-        providers.append(Provider(part.strip()))
-    return tuple(providers)
+def agents_from_args(args: argparse.Namespace) -> tuple[AgentConfig, ...]:
+    config = load_agents_config(getattr(args, "config", None))
+    return resolve_agents(getattr(args, "providers", None), config)
 
 
 def clean_body(text: str, max_lines: int = 8, max_chars: int = 900) -> str:
@@ -66,7 +59,7 @@ def format_result(session: str, results: list[WorkerResult]) -> str:
     lines = ["-" * 72, f"session {session}  workers={len(results)}"]
     for result in results:
         lines.append("")
-        lines.append(f"{result.provider.value}:")
+        lines.append(f"{result.provider}:")
         body = result.stdout.strip() or result.stderr.strip() or f"<empty output, exit={result.exit_code}>"
         for line in clean_body(body).splitlines():
             lines.append(f"  {line}")
@@ -89,7 +82,7 @@ def extract_parent_context(events: list[dict[str, Any]]) -> str:
 async def run_council(
     prompt: str,
     *,
-    providers: tuple[Provider, ...],
+    agents: tuple[AgentConfig, ...],
     timeout_sec: int,
     cwd: Path,
     parent_session: str | None = None,
@@ -118,14 +111,14 @@ async def run_council(
             )
 
     specs = [
-        WorkerSpec(provider=p, prompt=build_prompt(p, prompt), cwd=cwd, timeout_sec=timeout_sec, event_callback=emit)
-        for p in providers
+        WorkerSpec(agent=a, prompt=build_prompt(a, prompt), cwd=cwd, timeout_sec=timeout_sec, event_callback=emit)
+        for a in agents
     ]
     results = await asyncio.gather(*(run_worker(spec) for spec in specs))
     for result in results:
         write_event(trace, {
             "event": "worker_result",
-            "provider": result.provider.value,
+            "provider": result.provider,
             "exit_code": result.exit_code,
             "stdout": result.stdout,
             "stderr": result.stderr,
@@ -140,7 +133,7 @@ async def run_council(
 async def ask(args: argparse.Namespace) -> int:
     await run_council(
         resolve_prompt(args),
-        providers=provider_list(args.providers),
+        agents=agents_from_args(args),
         timeout_sec=args.timeout,
         cwd=args.cwd.resolve(),
         quiet=args.quiet,
@@ -165,7 +158,7 @@ async def continue_cmd(args: argparse.Namespace) -> int:
     ])
     await run_council(
         follow_up,
-        providers=provider_list(args.providers),
+        agents=agents_from_args(args),
         timeout_sec=args.timeout,
         cwd=args.cwd.resolve(),
         parent_session=session_id(trace_id(parent)),
@@ -223,13 +216,14 @@ CHAT_HELP = """Commands:
 
 async def chat(args: argparse.Namespace) -> int:
     current: str | None = None
+    agents = agents_from_args(args)
     initial = " ".join(args.prompt).strip()
     print("agent-council chat")
     print("Type /help for commands, /exit to quit.")
     if initial:
         current = await run_council(
             initial,
-            providers=provider_list(args.providers),
+            agents=agents,
             timeout_sec=args.timeout,
             cwd=args.cwd.resolve(),
             quiet=args.quiet,
@@ -263,7 +257,7 @@ async def chat(args: argparse.Namespace) -> int:
         if line.startswith("/new "):
             current = await run_council(
                 line.removeprefix("/new ").strip(),
-                providers=provider_list(args.providers),
+                agents=agents,
                 timeout_sec=args.timeout,
                 cwd=args.cwd.resolve(),
                 quiet=args.quiet,
@@ -281,7 +275,7 @@ async def chat(args: argparse.Namespace) -> int:
             ])
             current = await run_council(
                 prompt,
-                providers=provider_list(args.providers),
+                agents=agents,
                 timeout_sec=args.timeout,
                 cwd=args.cwd.resolve(),
                 parent_session=current,
@@ -290,7 +284,7 @@ async def chat(args: argparse.Namespace) -> int:
         else:
             current = await run_council(
                 line,
-                providers=provider_list(args.providers),
+                agents=agents,
                 timeout_sec=args.timeout,
                 cwd=args.cwd.resolve(),
                 quiet=args.quiet,
@@ -302,7 +296,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     def add_common(p: argparse.ArgumentParser) -> None:
-        p.add_argument("--providers", default="claude,codex,gemini", help="Comma-separated providers")
+        p.add_argument("--config", type=Path, help="Path to agents.yaml or agents.json")
+        p.add_argument("--providers", help="Comma-separated agent names from built-ins or config")
         p.add_argument("--timeout", type=int, default=900)
         p.add_argument("--cwd", type=Path, default=Path.cwd())
         p.add_argument("--quiet", action="store_true")

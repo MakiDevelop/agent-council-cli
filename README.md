@@ -26,14 +26,21 @@ cd agent-council-cli
 python -m pip install -e ".[dev]"
 ```
 
-You also need the provider CLIs you want to use:
+You also need the agent CLIs you want to use. The built-ins assume:
 
 - `claude`
 - `codex`
 - `gemini`
 
-Each provider uses its own CLI authentication. The harness strips common API key
-environment variables from worker subprocesses by default.
+### Authentication
+
+Yes: users should log in to each agent CLI from their own terminal first.
+`agent-council` does not manage OAuth, tokens, API keys, or browser login flows.
+It only calls local commands that are already authenticated by their own tools.
+
+The harness strips common API key environment variables from worker subprocesses
+by default, so provider CLI OAuth, keychain, or local profile state is the
+expected path.
 
 ## Usage
 
@@ -47,6 +54,13 @@ Use a subset:
 
 ```bash
 agent-council ask "Review this plan" --providers codex,gemini
+```
+
+Use custom agents:
+
+```bash
+agent-council ask "Review this plan" --config agents.yaml --providers security,local-llama
+agent-council chat --config agents.yaml --providers local-llama
 ```
 
 Continue the latest session:
@@ -100,6 +114,25 @@ The default roles are:
 - Claude: architect reviewer
 - Codex: engineer and dissenter
 - Gemini: analyst
+
+### Custom agents
+
+Custom agents are defined in `agents.yaml`:
+
+```yaml
+agents:
+  security:
+    command: ["my-security-agent", "review", "--prompt", "{prompt}"]
+    role: "Role: Security reviewer. Focus on threat modeling and unsafe defaults."
+
+  local-llama:
+    command: ["ollama", "run", "llama3.1", "{prompt}"]
+    role: "Role: Local reviewer. Be concise and call out uncertainty."
+```
+
+`{prompt}` is replaced with the full council prompt. Built-in agents are still
+available when a config file is provided, and config entries with the same name
+override built-ins.
 
 The default output is intentionally compact. Raw stdout/stderr and event details
 remain available through `agent-council watch`.

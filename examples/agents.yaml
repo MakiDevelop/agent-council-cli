@@ -1,0 +1,14 @@
+# Copy this file and customize the commands for your local agent CLIs.
+#
+# The {prompt} placeholder is replaced with the council prompt.
+# Authentication is handled by each CLI itself; log in to those tools in your
+# terminal before using them here.
+
+agents:
+  security:
+    command: ["my-security-agent", "review", "--prompt", "{prompt}"]
+    role: "Role: Security reviewer. Focus on threat modeling and unsafe defaults."
+
+  local-llama:
+    command: ["ollama", "run", "llama3.1", "{prompt}"]
+    role: "Role: Local reviewer. Be concise and call out uncertainty."
