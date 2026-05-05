@@ -1,12 +1,11 @@
 # agent-council-cli
 
-Run the same prompt across the AI CLIs you already use, then compare their
-answers.
+You have Claude, Codex, Gemini, or Ollama already logged in.
+You want to ask them the same question and compare what they say.
 
-`agent-council-cli` is a small wrapper for Claude, Codex, Gemini, Ollama, and
-custom local commands. It fires one prompt at multiple already-authenticated
-CLIs, prints a compact side-by-side result, and keeps the raw transcripts in an
-append-only JSONL log.
+`agent-council-cli` does exactly that from one terminal prompt. It runs the same
+question across multiple already-authenticated AI CLIs, prints a compact
+side-by-side result, and keeps the raw transcripts in an append-only JSONL log.
 
 > Authentication model: users log in to each agent CLI from their own terminal
 > first. `agent-council-cli` does not manage OAuth, store API keys, or run
@@ -29,6 +28,15 @@ append-only JSONL log.
 - not a multi-agent framework
 - not a token or OAuth manager
 - not a replacement for Claude Code, Codex, Gemini CLI, or Ollama
+
+## Inspired By
+
+This project is inspired by Andrej Karpathy's
+[`llm-council`](https://github.com/karpathy/llm-council) idea: ask multiple
+models the same question and compare their answers.
+
+The difference: `agent-council-cli` uses the local CLIs you are already logged
+into. It does not require OpenRouter, direct model API keys, or a browser app.
 
 ## Why
 
@@ -168,6 +176,24 @@ providers not to modify files. Provider CLIs still have their own behavior and
 permissions, so run this in a repository or directory where you are comfortable
 running those tools.
 
+## Common Objections
+
+**Why not just open three terminal tabs?**
+
+You can. This tool is for when you want less copy-paste, consistent role prompts,
+follow-up context, and a grep-friendly JSONL audit trail.
+
+**Why not use OpenRouter or LiteLLM?**
+
+Those are useful if you want unified API access. This tool is for people who
+already use local AI CLIs and want to reuse those existing logins.
+
+**Is this an agent framework?**
+
+No. It does not route tasks, manage worktrees, run tools between agents, or make
+decisions for you. It asks the same question to multiple CLIs and shows you the
+answers.
+
 ## Development
 
 ```bash
@@ -197,7 +223,9 @@ Not planned for now:
 
 ## 繁體中文快速指南
 
-`agent-council-cli` 是一個小型 CLI wrapper：把同一個 prompt 同時丟給你本機已登入的 Claude、Codex、Gemini、Ollama 或自訂 CLI，並列顯示結果，同時保留可追溯的 JSONL audit log。
+你已經在本機登入 Claude、Codex、Gemini 或 Ollama，想把同一個問題一次問完並比較答案。
+
+`agent-council-cli` 就是做這件事的小型 CLI wrapper：把同一個 prompt 同時丟給你本機已登入的 AI CLI，並列顯示結果，同時保留可追溯的 JSONL audit log。
 
 它不是 tmux / worktree / dashboard，也不是自動化 agent swarm。它只做一件事：幫你少複製貼上幾次，快速比較不同 AI CLI 的答案。
 
@@ -242,7 +270,9 @@ agent-council chat --config agents.yaml --providers local-llama
 
 ## 简体中文快速指南
 
-`agent-council-cli` 是一个小型 CLI wrapper：把同一个 prompt 同时丢给你本机已登录的 Claude、Codex、Gemini、Ollama 或自定义 CLI，并列显示结果，同时保留可追溯的 JSONL audit log。
+你已经在本机登录 Claude、Codex、Gemini 或 Ollama，想把同一个问题一次问完并比较答案。
+
+`agent-council-cli` 就是做这件事的小型 CLI wrapper：把同一个 prompt 同时丢给你本机已登录的 AI CLI，并列显示结果，同时保留可追溯的 JSONL audit log。
 
 它不是 tmux / worktree / dashboard，也不是自动化 agent swarm。它只做一件事：帮你少复制粘贴几次，快速比较不同 AI CLI 的答案。
 
@@ -287,7 +317,9 @@ agent-council chat --config agents.yaml --providers local-llama
 
 ## 日本語クイックガイド
 
-`agent-council-cli` は小さな CLI wrapper です。同じ prompt を、すでにローカルで認証済みの Claude、Codex、Gemini、Ollama、または任意の CLI に並列で渡し、結果を比較しやすく表示し、追跡可能な JSONL audit log を残します。
+Claude、Codex、Gemini、Ollama などの CLI にすでにローカルでログインしていて、同じ質問をまとめて投げて回答を比較したい。
+
+`agent-council-cli` はそのための小さな CLI wrapper です。同じ prompt を、すでに認証済みの AI CLI に並列で渡し、結果を比較しやすく表示し、追跡可能な JSONL audit log を残します。
 
 tmux / worktree / dashboard ではなく、自律型 agent swarm でもありません。目的はシンプルです。同じ質問を何度もコピー＆ペーストせず、複数の AI CLI の回答をすばやく比較することです。
 
