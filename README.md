@@ -76,6 +76,8 @@ expected path.
 
 ## Usage
 
+![agent-council-cli demo](demo/agent-council-demo.gif)
+
 Run the demo without real AI CLI credentials:
 
 ```bash
@@ -270,6 +272,7 @@ answers.
 pytest
 ruff check .
 python -m agent_council chat
+python demo/render_demo_gif.py
 ```
 
 ## Roadmap
