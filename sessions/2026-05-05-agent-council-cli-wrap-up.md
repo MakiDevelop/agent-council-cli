@@ -2,7 +2,9 @@
 
 Date: 2026-05-05
 Branch: `main`
-Latest commit: `b8f0154 新增 README demo GIF`
+Latest implementation commit: `b8f0154 新增 README demo GIF`
+Session note commit: `8ba3b64 新增 session 收尾記錄`
+Memhall entry: `01KQVSJAK5T6GG3F2Y3GNWQX1G`
 
 ## Goal
 
