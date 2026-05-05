@@ -159,6 +159,18 @@ agent-council status
 agent-council watch
 ```
 
+Generate memory candidates from the latest audit log:
+
+```bash
+agent-council memory-candidates --project my-repo
+agent-council memory-candidates --format jsonl --out memory-candidates.jsonl
+agent-council memory-candidates --format memhall-jsonl --out memhall-import.jsonl
+agent-council memory-candidates --format mem0-jsonl --out mem0-import.jsonl
+```
+
+This is a sidecar step. It only reads audit logs and emits candidate records; it
+does not write to any memory system.
+
 Audit logs are stored in:
 
 ```text
@@ -204,6 +216,28 @@ override built-ins.
 
 The default output is intentionally compact. Raw stdout/stderr and event details
 remain available through `agent-council watch`.
+
+### Memory sidecar
+
+`memory-candidates` classifies completed agent responses into suggested memory
+destinations:
+
+- `agent:<name>` for agent-specific memory
+- `project:<name>` when `--project` is provided
+
+Each candidate includes `source_agent`, `target_namespace`, `memory_type`,
+`confidence`, `reason`, `text`, and `status: candidate`.
+
+The command is intentionally read-only. A later approval/write step can decide
+whether candidates should be written to memhall, a vector store, or any other
+memory system.
+
+Supported export formats:
+
+- `markdown` for human review
+- `jsonl` for the native candidate schema
+- `memhall-jsonl` for memory-hall `/v1/memory/write` payloads
+- `mem0-jsonl` for mem0-style `messages` + `user_id` imports
 
 ## Safety
 

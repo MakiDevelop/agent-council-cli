@@ -10,7 +10,22 @@ from pathlib import Path
 from typing import Any
 
 from .audit import audit_dir, audit_file, latest_session, load_events, session_id, trace_id, write_event
-from .workers import AgentConfig, WorkerResult, WorkerSpec, build_prompt, load_agents_config, resolve_agents, run_worker
+from .memory import (
+    build_memory_candidates,
+    format_candidates_jsonl,
+    format_candidates_markdown,
+    format_candidates_mem0_jsonl,
+    format_candidates_memhall_jsonl,
+)
+from .workers import (
+    AgentConfig,
+    WorkerResult,
+    WorkerSpec,
+    build_prompt,
+    load_agents_config,
+    resolve_agents,
+    run_worker,
+)
 
 
 def make_session_id(prefix: str, prompt: str) -> str:
@@ -203,6 +218,32 @@ def watch(args: argparse.Namespace) -> int:
     return 0
 
 
+def memory_candidates(args: argparse.Namespace) -> int:
+    session = args.session or latest_session()
+    if session is None:
+        print(f"No sessions in {audit_dir()}", file=sys.stderr)
+        return 4
+    events = load_events(session)
+    candidates = build_memory_candidates(
+        events,
+        project=args.project,
+        min_confidence=args.min_confidence,
+    )
+    if args.format == "jsonl":
+        output = format_candidates_jsonl(candidates)
+    elif args.format == "memhall-jsonl":
+        output = format_candidates_memhall_jsonl(candidates)
+    elif args.format == "mem0-jsonl":
+        output = format_candidates_mem0_jsonl(candidates)
+    else:
+        output = format_candidates_markdown(candidates)
+    if args.out:
+        args.out.write_text(output + ("\n" if output else ""), encoding="utf-8")
+    else:
+        print(output)
+    return 0
+
+
 CHAT_HELP = """Commands:
   /help              Show this help
   /status            Show current session status
@@ -329,6 +370,17 @@ def build_parser() -> argparse.ArgumentParser:
     watch_p = sub.add_parser("watch")
     watch_p.add_argument("session", nargs="?")
 
+    mem_p = sub.add_parser("memory-candidates", help="Classify audit logs into memory candidates")
+    mem_p.add_argument("session", nargs="?")
+    mem_p.add_argument("--project", help="Also emit project:<name> candidates")
+    mem_p.add_argument(
+        "--format",
+        choices=("jsonl", "markdown", "memhall-jsonl", "mem0-jsonl"),
+        default="markdown",
+    )
+    mem_p.add_argument("--min-confidence", type=float, default=0.5)
+    mem_p.add_argument("--out", type=Path)
+
     return parser
 
 
@@ -347,6 +399,8 @@ def main(argv: list[str] | None = None) -> int:
         return status(args)
     if args.cmd == "watch":
         return watch(args)
+    if args.cmd == "memory-candidates":
+        return memory_candidates(args)
     return 2
 
 

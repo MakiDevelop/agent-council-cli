@@ -5,6 +5,12 @@ import json
 
 from agent_council.audit import latest_session, load_events, write_event
 from agent_council.cli import agents_from_args, clean_body, extract_parent_context, resolve_prompt
+from agent_council.memory import (
+    build_memory_candidates,
+    format_candidates_jsonl,
+    format_candidates_mem0_jsonl,
+    format_candidates_memhall_jsonl,
+)
 from agent_council.workers import AgentConfig, build_command, build_prompt, load_agents_config, resolve_agents
 
 
@@ -96,3 +102,77 @@ def test_extract_parent_context() -> None:
 def test_watch_events_are_json_serializable() -> None:
     event = {"event": "worker_result", "provider": "gemini", "stdout": "ok"}
     assert json.loads(json.dumps(event))["provider"] == "gemini"
+
+
+def test_memory_candidates_route_by_agent() -> None:
+    events = [
+        {"event": "session_created", "session_id": "ask-test", "prompt": "review this"},
+        {
+            "event": "worker_result",
+            "provider": "codex",
+            "exit_code": 0,
+            "stdout": "Recommendation: add tests before refactor.\nRisk: migration bug.",
+        },
+    ]
+    candidates = build_memory_candidates(events, project="demo")
+    assert [c.target_namespace for c in candidates] == ["agent:codex", "project:demo"]
+    assert candidates[0].memory_type == "implementation"
+    assert "add tests" in candidates[0].text
+
+
+def test_memory_candidates_skip_failed_workers() -> None:
+    events = [
+        {"event": "session_created", "session_id": "ask-test"},
+        {
+            "event": "worker_result",
+            "provider": "gemini",
+            "exit_code": 127,
+            "stderr": "binary not found",
+        },
+    ]
+    assert build_memory_candidates(events) == []
+
+
+def test_memory_candidates_jsonl() -> None:
+    events = [
+        {"event": "session_created", "session_id": "ask-test"},
+        {
+            "event": "worker_result",
+            "provider": "claude",
+            "exit_code": 0,
+            "stdout": "Recommendation: document the architecture decision and rollout plan.",
+        },
+    ]
+    lines = format_candidates_jsonl(build_memory_candidates(events)).splitlines()
+    assert json.loads(lines[0])["target_namespace"] == "agent:claude"
+
+
+def test_memory_candidates_memhall_jsonl() -> None:
+    events = [
+        {"event": "session_created", "session_id": "ask-test"},
+        {
+            "event": "worker_result",
+            "provider": "codex",
+            "exit_code": 0,
+            "stdout": "Recommendation: keep a JSONL audit trail for implementation review.",
+        },
+    ]
+    record = json.loads(format_candidates_memhall_jsonl(build_memory_candidates(events)))
+    assert record["namespace"] == "agent:codex"
+    assert record["agent_id"] == "codex"
+    assert record["metadata"]["source"] == "agent-council-cli"
+
+
+def test_memory_candidates_mem0_jsonl() -> None:
+    events = [
+        {"event": "session_created", "session_id": "ask-test"},
+        {
+            "event": "worker_result",
+            "provider": "gemini",
+            "exit_code": 0,
+            "stdout": "Recommendation: compare alternatives and tradeoffs before choosing.",
+        },
+    ]
+    record = json.loads(format_candidates_mem0_jsonl(build_memory_candidates(events)))
+    assert record["user_id"] == "agent:gemini"
+    assert record["messages"][0]["role"] == "assistant"
