@@ -1,0 +1,12 @@
+agents:
+  claude-mock:
+    command: ["python", "demo/mock_agent.py", "--agent", "claude-mock", "{prompt}"]
+    role: "Role: Architect reviewer. Focus on system design and operational risk."
+
+  codex-mock:
+    command: ["python", "demo/mock_agent.py", "--agent", "codex-mock", "{prompt}"]
+    role: "Role: Engineer and dissenter. Focus on implementation cost and tests."
+
+  gemini-mock:
+    command: ["python", "demo/mock_agent.py", "--agent", "gemini-mock", "{prompt}"]
+    role: "Role: Analyst. Focus on tradeoffs, scope, and alternatives."

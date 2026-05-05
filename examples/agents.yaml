@@ -12,3 +12,7 @@ agents:
   local-llama:
     command: ["ollama", "run", "llama3.1", "{prompt}"]
     role: "Role: Local reviewer. Be concise and call out uncertainty."
+
+  local-gemma4-31b:
+    command: ["ollama", "run", "gemma4:31b", "{prompt}"]
+    role: "Role: Local Ollama reviewer. Focus on practical tradeoffs and call out uncertainty."

@@ -1,7 +1,7 @@
 [project]
 name = "agent-council-cli"
 version = "0.1.0"
-description = "Prompt-native multi-agent validation loop for Claude, Codex, and Gemini CLIs."
+description = "Run the same prompt across multiple authenticated AI CLIs and compare their answers."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

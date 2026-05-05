@@ -76,6 +76,25 @@ expected path.
 
 ## Usage
 
+Run the demo without real AI CLI credentials:
+
+```bash
+agent-council ask "Should we add Redis caching to this API?" \
+  --config demo/agents.yaml \
+  --providers claude-mock,codex-mock,gemini-mock
+```
+
+The demo uses mock agents so you can see the workflow before connecting real
+CLIs.
+
+If you have not installed the console script yet, run the same demo with:
+
+```bash
+python -m agent_council ask "Should we add Redis caching to this API?" \
+  --config demo/agents.yaml \
+  --providers claude-mock,codex-mock,gemini-mock
+```
+
 Ask all default providers:
 
 ```bash
@@ -93,6 +112,19 @@ Use custom agents:
 ```bash
 agent-council ask "Review this plan" --config agents.yaml --providers security,local-llama
 agent-council chat --config agents.yaml --providers local-llama
+```
+
+Use a local Ollama model:
+
+```yaml
+agents:
+  local-gemma4-31b:
+    command: ["ollama", "run", "gemma4:31b", "{prompt}"]
+    role: "Role: Local Ollama reviewer. Focus on practical tradeoffs and call out uncertainty."
+```
+
+```bash
+agent-council ask "Review this plan" --config agents.yaml --providers local-gemma4-31b
 ```
 
 Continue the latest session:
@@ -160,6 +192,10 @@ agents:
   local-llama:
     command: ["ollama", "run", "llama3.1", "{prompt}"]
     role: "Role: Local reviewer. Be concise and call out uncertainty."
+
+  local-gemma4-31b:
+    command: ["ollama", "run", "gemma4:31b", "{prompt}"]
+    role: "Role: Local Ollama reviewer. Focus on practical tradeoffs and call out uncertainty."
 ```
 
 `{prompt}` is replaced with the full council prompt. Built-in agents are still
